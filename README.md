@@ -89,14 +89,14 @@ There are several key points in creating the configuration object to consider:
 ```kotlin
 val configs = WhitelabelPayConfigurations(
     bundleId = BuildConfig.APPLICATION_ID,
-    merchantId = MERCHANR_ID,
+    merchantId = MERCHANT_ID,
     notificationId = NOTIFICATION_ID,
     environment = WhitelabelPayEnvironment.INTEGRATION,
     showErrorLogs = true
 )
 ```
 
-- `MERCHANT_ID` is provided by PaymentTools;
+- `MERCHANT_ID` use `rew` as merchant id;
 - `NOTIFICATION_ID` represents a UUID value converted to a string and without dashes.
 
 ### 2. SDK State
@@ -104,20 +104,20 @@ The WhitelabelPay SDK offers a mechanism to check the status of the SDK instance
 WhitelabelPay system:
 
 ```kotlin
-    val state = sdk.deviceState()
+val state = sdk.deviceState()
 ```
 
 or observe the state changes:
 
 ```kotlin
-    sdk.observeDeviceState()
-        .collect { state ->
-            when (state) {
-                State.INACTIVE -> { }
-                State.ONBOARDING -> { }
-                State.ACTIVE -> { }
-            }
+sdk.observeDeviceState()
+    .collect { state ->
+        when (state) {
+            State.INACTIVE -> { }
+            State.ONBOARDING -> { }
+            State.ACTIVE -> { }
         }
+    }
 ```
 
 ### 3. Tokens
@@ -126,11 +126,11 @@ or observe the state changes:
 The enrolment token is used to register a card (once or multiple times) within the WhitelabelPay
 system. The sdk provides a function to get the enrolment token:
 ```kotlin
-    try {
-        val enrolmentToken = sdk.getEnrolmentToken()
-    } catch (e: Exception) {
-        Timber.e("get onboarding token failed: ", e)
-    }
+try {
+    val enrolmentToken = sdk.getEnrolmentToken()
+} catch (e: Exception) {
+    Timber.e("get onboarding token failed: ", e)
+}
 ```
 
 The enrolment token:
@@ -144,7 +144,7 @@ In order to use the token with the OneScan format, the SDK offers an utility fun
 the string representation of the token:
 
 ```kotlin
-    val tokenString = enrolmentToken.stringRepresentation()
+val tokenString = enrolmentToken.stringRepresentation()
 ```
 
 #### Payment token
@@ -152,11 +152,11 @@ The payment token is used to make payments within the WhitelabelPay system.
 The sdk provides a function to get a payment token (if available):
 
 ```kotlin
-    try {
-        val paymentToken = sdk.getPaymentToken()
-    } catch (e: Exception) {
-        Timber.e("get payment token failed: ", e)
-    }
+try {
+    val paymentToken = sdk.getPaymentToken()
+} catch (e: Exception) {
+    Timber.e("get payment token failed: ", e)
+}
 ```
 
 A payment token(s):
@@ -188,13 +188,13 @@ The SDK offers an utility function to synchronize all SDK data available on devi
 data and payment tokens):
 
 ```kotlin
-    viewModelScope.launch {
-        try {
-            val state = sdk.sync()
-        } catch (e: Exception) {
-            Timber.e("sync failed: ", e)
-        }
+viewModelScope.launch {
+    try {
+        val state = sdk.sync()
+    } catch (e: Exception) {
+        Timber.e("sync failed: ", e)
     }
+}
 ```
 
 ### 5. Registered cards operations (payment means)
@@ -204,53 +204,53 @@ called **payment means** within WhitelabelPay.
 
 #### - Retrieve payment means
 ```kotlin
-    try {
-        val paymentMeansList = sdk.getPaymentMeansList()
-    } catch (e: Exception) {
-        Timber.e("get payment means list failed: ", e)
-    }
+try {
+    val paymentMeansList = sdk.getPaymentMeansList()
+} catch (e: Exception) {
+    Timber.e("get payment means list failed: ", e)
+}
 ```
 
 #### - Deactivate an active payment mean
 ```kotlin
-    viewModelScope.launch {
-        try {
-            sdk.deactivatePaymentMeans(
-                paymentMeanId = paymentMean.Id,
-                onDeactivationSuccess = { }
-            )
-        } catch (e: Exception) {
-            Timber.e("deactivation of payment mean failed: ", e)
-        }
+viewModelScope.launch {
+    try {
+        sdk.deactivatePaymentMeans(
+            paymentMeanId = paymentMean.Id,
+            onDeactivationSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("deactivation of payment mean failed: ", e)
     }
+}
 ```
 
 #### - Reactivate an inactive payment mean
 ```kotlin
-    viewModelScope.launch {
-        try {
-            sdk.reactivatePaymentMean(
-                paymentMeanId = paymentMean.Id,
-                onReactivationSuccess = { }
-            )
-        } catch (e: Exception) {
-            Timber.e("reactivation of payment mean failed: ", e)
-        }
+viewModelScope.launch {
+    try {
+        sdk.reactivatePaymentMean(
+            paymentMeanId = paymentMean.Id,
+            onReactivationSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("reactivation of payment mean failed: ", e)
     }
+}
 ```
 
 #### - Delete a payment mean
 ```kotlin
-    viewModelScope.launch {
-        try {
-            sdk.deletePaymentMean(
-                paymentMeanId = paymentMean.Id,
-                onDeletionSuccess = { }
-            )
-        } catch (e: Exception) {
-            Timber.e("deleting payment mean failed: ", e)
-        }
+viewModelScope.launch {
+    try {
+        sdk.deletePaymentMean(
+            paymentMeanId = paymentMean.Id,
+            onDeletionSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("deleting payment mean failed: ", e)
     }
+}
 ```
 
 ### 6. Sign Off
@@ -314,5 +314,3 @@ the shared preferences file should not be backed up. Here's an example of such a
 ```
 
 where `bundle-id` is the value specified at step: 1. Setup for `bundleId` parameter.
-
-# Package paymenttoosl-sdk
