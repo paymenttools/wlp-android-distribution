@@ -1,4 +1,4 @@
-# Module Whitelabel Pay SDK
+# Whitelabel Pay SDK
 
 ## SDK Installation
 
