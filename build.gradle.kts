@@ -13,7 +13,7 @@ publishing {
         register<MavenPublication>("release"){
             groupId = "com.paymenttools"
             artifactId = "paymenttoolssdk"
-            version = "1.0.11"
+            version = "1.0.12"
             artifact("source/paymenttools-sdk-release.aar")
         }
     }

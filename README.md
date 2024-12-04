@@ -4,7 +4,7 @@
 
 ### 1. Get your Github token.
 To generate a Github token, navigate to your Github profile -> Settings -> Developer settings -> Personal access token -> 
-Generate new token (classic). Check the read:packages scope. Click Generate token. 
+Generate new token (classic). Check the read:packages scope. Click Generate token. More details can be found [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
 
 ### 2. Create / update the github.properties file.
 Create the github.properties file in your project at root level. Add the following 2 properties:
