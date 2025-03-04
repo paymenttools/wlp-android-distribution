@@ -43,8 +43,8 @@ collaborators:
     permission: pull
   - username: rd-daniela-becker
     permission: pull
-  # - username: TheElementNrOne
-  #   permission: pull
+  - username: TheElementNrOne
+    permission: pull
   - username: Faltenreich
     permission: pull
   - username: TilmanDo
