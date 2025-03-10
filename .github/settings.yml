@@ -57,4 +57,7 @@ collaborators:
     permission: pull
   - username: rd-stefan-jager
     permission: pull
-  
+  - username: lukaszkalnik
+    permission: pull
+  - username: rd-christian-dziuba
+    permission: pull
