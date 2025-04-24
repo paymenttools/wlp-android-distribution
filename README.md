@@ -2,20 +2,45 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.5.
-This release focuses on improving the SDK's stability and adds logging functionality.
+This is the WhitelabelPay SDK version 1.1.6.
+This release introduces several security enhancements and bugfixes,
+improves backend integration testing,
+and aligns functionality with iOS and backend expectations.
 
 ### New features
 
-- Added the `exportLogs` function to export the SDK log file.
-  It is recommended to enable logs for the development/testing period to facilitate debugging and issue resolution on
-  PaymentTools side.
+- Updated `Token` class with a new type: `Empty`.
+  This change directly affects the token StateFlow property of the WhitelabelPay class,
+  changing it into a non-nullable one.
 
 ### Breaking changes
 
-- `WhitelabelPayConfigurations` class renamed a property: `showErrorLogs` to `shouldLog`.
-  The property enables/disables adding logcat messages and log file.
-- `handleNotification` function signature updated to remove the `eventBody` param.
+1. **WhitelabelPayConfigurations** class renamed several properties:
+    - ~~`merchantId`~~ → `tenantId`;
+    - ~~`notificationId`~~ → `referenceId`.
+
+2. **token** StateFlow property in WhitelabelPay SDK is now **non-nullable**, with default value
+   set to `Token.Empty`:
+    ```kotlin
+        private val _token = MutableStateFlow<Token>(Token.Empty)
+        
+        override val token: StateFlow<Token>
+            get() {
+                return _token
+            }
+    ```
+
+3. **getEnrolmentToken** function in WhitelabelPay SDK now throws a different error when no
+   reference id is provided:
+    ```kotlin
+        val token = try {
+            getEnrolmentToken()
+        } catch (e: WhitelabelPayError.MissingReferenceId) {
+            // handle error
+        }
+    ```
+
+4. Removed the **InvalidTokenError** error from the WhitelabelPayError class.
 
 ## SDK Installation
 
@@ -26,8 +51,8 @@ that hosts [SDK distribution packages](https://github.com/paymenttools/wlp-andro
 
 ### 2. Get your GitHub token.
 
-To generate a GitHub token, navigate to your GitHub profile → Settings → Developer settings → Personal access
-token → Generate new token (classic).
+To generate a GitHub token, navigate to your GitHub profile → Settings → Developer settings →
+Personal access token → Generate new token (classic).
 Select the `read:packages` scope.
 Click Generate token.<br/>
 More details can be
@@ -122,19 +147,19 @@ To make use of the SDK, an instance of WhitelabelPayImplementation needs to be c
 There are several key points in creating the configuration object to consider:
 
 ```kotlin
-    const val MERCHANT_ID = "rew"
     val configs = WhitelabelPayConfigurations(
         bundleId = BuildConfig.APPLICATION_ID,
-        merchantId = MERCHANT_ID,
-        notificationId = NOTIFICATION_ID,
+        tenantId = TENANT_ID,
+        referenceId = NOTIFICATION_ID,
         environment = WhitelabelPayEnvironment.INTEGRATION,
         shouldLog = true
     )
 ```
 
+- `TENANT_ID` should be set to `rew`.
 - `NOTIFICATION_ID` represents a UUID value converted to a string and without dashes.
 - `shouldLog` is a boolean value that enables or disables logging.
-  The logs are printed in the logcat with the tag `YP-SDK`.
+  The logs are printed in the logcat with the tag `WLP-SDK`.
   The logs are also recorded in a file that can be exported using the `exportLogs` function.
 
 ### 2. SDK State
@@ -168,7 +193,7 @@ system. The sdk provides a function to get the enrolment token:
 ```kotlin
     try {
         val enrolmentToken = sdk.getEnrolmentToken()
-    } catch (e: Exception) {
+    } catch (e: WhitelabelPayError.MissingReferenceId) {
         Timber.e("get onboarding token failed: ", e)
     }
 ```
@@ -203,7 +228,7 @@ The sdk provides a function to get a payment token (if available):
 A payment token:
 
 - always start with ***02***;
-- it is consumable, meaning that once used to perform a payment, it is no longer valid;
+- it is consumable, meaning that once used to perform a payment; it is no longer valid;
 - it has an expiration period of 10 minutes since its generation;
 - has an offline limit: once enough tokens are read while offline, no more tokens will be
   available.
@@ -213,7 +238,7 @@ Fetching a payment token when there is internet connectivity:
 1. It will trigger an API call that returns the data associated with the active card
 2. A token will be generated and returned
 
-Fetching a payment token when there is NO internet connectivity:
+Fetching a payment token when there is **NO** internet connectivity:
 
 1. A limit is imposed on the number of available tokens while offline
 2. A token will be generated and returned while the limit is not reached
@@ -240,6 +265,9 @@ The SDK offers a StateFlow property to observe the token changes:
             }
             is Token.PaymentToken -> {
                 // handle payment token
+            }
+            is Token.Empty -> {
+                //handle default value
             }
         }
     }
@@ -285,8 +313,7 @@ fun startObservingChanges() {
                 error is WhitelabelPayError.GetPaymentMeansError ||
                 error is WhitelabelPayError.GetPaymentTokenError ||
                 error is WhitelabelPayError.NetworkConnectivityFail ||
-                error is WhitelabelPayError.RequestDataSignatureFailure ||
-                error is WhitelabelPayError.InvalidTokenFormat
+                error is WhitelabelPayError.RequestDataSignatureFailure 
             ) {
                 setToken(null)
                 updateCodeImage(null)
@@ -381,23 +408,26 @@ called **payment means** within WhitelabelPay.
 
 ### 7. Sign Off
 
-Sign off, deactivates all payment means and removes locally stored payment means and payment tokens.
+The *signOff* functionality purges ***ALL*** SDK data from the device, as well as deactivates all
+payment means on the backend and changes the mandate status.
 The state of the SDK is set to ONBOARDING.
 
 ```kotlin
-viewModelScope.launch {
-    wlpSdk.signOffFromWhiteLabelPay()
-}
+    viewModelScope.launch {
+        sdk.signOff(
+            onSignOffSuccess = { }
+        )
+    }
 ```
 
 ### 8. Reset
 
-The reset functionality purges ***ALL*** SDK data from the device, resets the SDK state to INACTIVE
+The *reset* functionality purges ***ALL*** SDK data from the device, resets the SDK state to INACTIVE.
 
 ```kotlin
-viewModelScope.launch {
-    wlpSdk.reset()
-}
+    viewModelScope.launch {
+        wlpSdk.reset()
+    }
 ```
 
 ### 9. Logging
@@ -405,7 +435,7 @@ viewModelScope.launch {
 The SDK offers the functionality to log the main actions that are performed by the SDK.
 Enabling the logging can be done by setting the `shouldLog` parameter to `true` when initializing
 the WhitelabelPayConfigurations object.
-The logs are printed in the logcat with the tag `YP-SDK`.
+The logs are printed in the logcat with the tag `WLP-SDK`.
 
 The SDK offers the possibility to export the logs to a file by using the `exportLogs` function.
 Here is an example of how to export the logs to the external Downloads directory:
@@ -434,7 +464,34 @@ private fun exportLogFileToDownloads(): File? {
 }
 ```
 
-### 10. Exclude WhitelabelPay data from automatic backup
+### 10. Passing push notifications to WhitelabelPay SDK
+
+The WhitelabelPay SDK offers the functionality to handle push notifications and to react to four
+different events:
+- enrolment successful;
+- enrolment failed;
+- payment successful;
+- payment failed.
+
+The reaction to these events would be a sync action.
+In all cases, except for **enrolment failed**, 
+a new payment token will be generated and emitted to the observers of the `token` StateFlow property.
+Also in the case of **enrolment successful**, the SDK state will be set to `ACTIVE`.
+
+The SDK offers the `handleNotification` function to handle the push notifications.
+It accepts a string parameter that represents the type of the notification. 
+The notification type should be retrieved from the push notification payload:
+
+```kotlin
+     val eventType = message.data["type"]
+     try {
+          sdk.handleNotification(eventType = eventType)
+     } catch (e: WhitelabelPayError.WrongNotificationType) {
+          Timber.e(e)
+     }
+```
+
+### 11. Exclude WhitelabelPay data from automatic backup
 
 If the Application using WhitelabelPay has automatic backup enabled, make sure the data
 generated by the SDK is not persisted in the end-user's Google account.
@@ -454,7 +511,7 @@ specifying an XML resource that excludes the shared preferences file.
 <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/full_backup_exclude">
-  <!-- ... -->
+    <!-- ... -->
 </application>
 ```
 
@@ -467,10 +524,8 @@ the shared preferences file shouldn't be backed up. Here is an example of such a
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-  <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
+    <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
 </full-backup-content>
 ```
 
 where `bundle-id` is the value specified at the step: 1. Setup for `bundleId` parameter.
-
-# Package paymenttools-sdk
