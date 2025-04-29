@@ -2,7 +2,7 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.6.
+This is the WhitelabelPay SDK version 1.1.7.
 This release introduces several security enhancements and bugfixes,
 improves backend integration testing,
 and aligns functionality with iOS and backend expectations.
@@ -41,6 +41,11 @@ and aligns functionality with iOS and backend expectations.
     ```
 
 4. Removed the **InvalidTokenError** error from the WhitelabelPayError class.
+5. Added an overloaded version of the **sync** function in WhitelabelPay SDK that accepts a boolean
+   parameter to emit a new token through the `token` StateFlow property:
+    ```kotlin
+        suspend fun sync(updateToken: Boolean): State
+    ```
 
 ## SDK Installation
 
@@ -150,14 +155,14 @@ There are several key points in creating the configuration object to consider:
     val configs = WhitelabelPayConfigurations(
         bundleId = BuildConfig.APPLICATION_ID,
         tenantId = TENANT_ID,
-        referenceId = NOTIFICATION_ID,
+        referenceId = REFERENCE_ID,
         environment = WhitelabelPayEnvironment.INTEGRATION,
         shouldLog = true
     )
 ```
 
-- `TENANT_ID` should be set to `rew`.
-- `NOTIFICATION_ID` represents a UUID value converted to a string and without dashes.
+- `TENANT_ID` tenant identifier provided by Payment Tools. Should be set to `rew`.
+- `REFERENCE_ID` **Unique** notification identifier for the device.
 - `shouldLog` is a boolean value that enables or disables logging.
   The logs are printed in the logcat with the tag `WLP-SDK`.
   The logs are also recorded in a file that can be exported using the `exportLogs` function.
@@ -281,6 +286,19 @@ The SDK offers a function to synchronize all SDK data available on the device (s
     viewModelScope.launch {
         try {
             val state = sdk.sync()
+        } catch (e: Exception) {
+            Timber.e("sync failed: ", e)
+        }
+    }
+```
+
+There's also an overloaded version of the function that accepts a boolean parameter to emit or not
+a new token through the `token` StateFlow property:
+
+```kotlin
+    viewModelScope.launch {
+        try {
+            val state = sdk.sync(updateToken = true)
         } catch (e: Exception) {
             Timber.e("sync failed: ", e)
         }
