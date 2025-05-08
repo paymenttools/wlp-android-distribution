@@ -2,8 +2,8 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.8.
-This release aligns functionality with iOS and backend expectations.
+This is the WhitelabelPay SDK version 1.1.9.
+This release introduces a bugfix for token polling mechanism.
 
 ### New features
 
