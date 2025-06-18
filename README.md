@@ -2,36 +2,15 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.10.
-This release focuses on improving the SDK's functionality and performance.
-It brings a new parameter to the SDK configuration: `coldStart` that stops any api calls when the SDK is initialized.
-Also, a new error type was introduced: `InvalidEnrolmentInstance`.
-It is used to signal an invalid enrolment detected by the backend.
+This is the WhitelabelPay SDK version 1.1.11.
+This release focuses on fixing several SDK issues and improving on token generation process.
 
-### New features
+### Bug fixes
 
-- The `coldStart` parameter was added to the `WhitelabelPayConfigurations` class.
-  The default value is `false`.
-  When set to `true`, the SDK will not perform any API calls during initialization.
-  Calling the `sync()` or `startMonitoringUpdates()` functions will reset the
-  parameter value to `false`.
+- The SDK now correctly updates its state, regardless of the `coldSStart` parameter value.
 
-- Added `InvalidEnrolmentInstance` error to the WhitelabelPay SDK.
-  This error will be thrown when the backend does not accept/authorize requests from 
-  a device that has been previously enrolled.
-  This will happen when a device identifier is deleted from the server because it was reported
-  stolen or fraud detected, or when an unsolvable technical error stops the key verification from
-  working.
-  This is an unrecoverable state for a device, assuming the error is permanent.
-  The only way forward is to reset the SDK and start fresh.
-  A full reset is not something to be
-  taken lightly or done without the users’ knowledge, so we strongly suggest gaining consent from
-  the user.
-
-### Breaking changes
-
-- The `setReferenceId` is now a suspend function. 
-  It performs a sync operation on updating the reference id.
+- The SDK correctly handles the sign-off process, ensuring a new enrolment can be performed
+  after a sign-off.
 
 ## SDK Installation
 
