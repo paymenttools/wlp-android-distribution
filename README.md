@@ -1,16 +1,18 @@
 # Module Whitelabel Pay SDK
 
-## What's new
+### What's new
 
-This is the WhitelabelPay SDK version 1.1.11.
-This release focuses on fixing several SDK issues and improving on token generation process.
+- The SDK now handles the `InvalidEnrolmentInstance` error by resetting the SDK state to INACTIVE.
+  The error is still propagated to the `startMonitoringUpdates` callback function to facilitate
+  the application detecting this event and providing the user a cue to begin the re-enrolment
+  process.
+
+- The SDK now has enabled remote logging. The old way of logging is still there. The `shouldLog`
+  flag in the `WhitelabelPayConfigurations` does not affect the remote logging.
 
 ### Bug fixes
 
-- The SDK now correctly updates its state, regardless of the `coldSStart` parameter value.
-
-- The SDK correctly handles the sign-off process, ensuring a new enrolment can be performed
-  after a sign-off.
+- The SDK now correctly exposes `WhitelabelPayError` subclasses.
 
 ## SDK Installation
 
@@ -316,7 +318,7 @@ fun startObservingChanges() {
             }
 
             if (error is WhitelabelPayError.InvalidEnrolmentInstance) {
-                // todo: ask for user permission to reset/signoff and trigger an re-enrolment
+              // todo: Inform the user the SDK instance is invalid and needs to be re-enrolled
             }
         }
     )
@@ -433,8 +435,9 @@ The *reset* functionality purges ***ALL*** SDK data from the device, resets the 
 ### 10. Logging
 
 The SDK offers the functionality to log the main actions that are performed by the SDK.
-Enabling the logging can be done by setting the `shouldLog` parameter to `true` when initializing
-the WhitelabelPayConfigurations object.
+The SDK has remote logging, enabled by default, and also local logging to logcat and log file.
+Enabling the local logging can be done by setting the `shouldLog` parameter to `true` when
+initializing the WhitelabelPayConfigurations object.
 The logs are printed in the logcat with the tag `WLP-SDK`.
 
 The SDK offers the possibility to export the logs to a file by using the `exportLogs` function.
