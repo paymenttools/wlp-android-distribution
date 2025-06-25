@@ -20,7 +20,7 @@ repository:
 
 # See https://docs.github.com/en/rest/reference/teams#add-or-update-team-repository-permissions for available options
 teams:
-  - name: Moby
+  - name: dev-team-moby
     permission: admin
   - name: infrastructure-administration
     permission: admin
