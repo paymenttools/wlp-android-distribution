@@ -1,14 +1,32 @@
 # Module Whitelabel Pay SDK
 
+## What's new
+
+This is the WhitelabelPay SDK version 1.1.14.
+This release introduces a new SDK state value and a new way to relay the payment means state changes.
+
 ### What's new
 
-- The SDK now handles the `InvalidEnrolmentInstance` error by resetting the SDK state to INACTIVE.
-  The error is still propagated to the `startMonitoringUpdates` callback function to facilitate
-  the application detecting this event and providing the user a cue to begin the re-enrolment
-  process.
+- The SDK now has a new state value: `State.ACTIVATING`.
+  This state is set when the device is enrolled, but the SEPA mandate is process of activating.
+  Even though the SDK will provide a payment token, it is not possible to make payments
+  with it.
+  We recommend blurring the payment token in the UI and displaying a message to the customer
+  informing them that the payment means is not yet active.
+  The SDK will automatically transition to `State.ACTIVE` when the mandate activation process is completed.
 
-- The SDK now has enabled remote logging. The old way of logging is still there. The `shouldLog`
-  flag in the `WhitelabelPayConfigurations` does not affect the remote logging.
+- The payment means introduce a new property: `val state: PaymentMeanState`.
+  This property can have the following values:
+  - `PaymentMeanState.CREATED` - the default value, meaning the payment means are only created;
+  - `PaymentMeanState.ACTIVATING` - the SEPA mandate is in the process of being activated;
+  - `PaymentMeanState.ACTIVE` - the payment mean is active and can be used for payments;
+  - `PaymentMeanState.EXPIRED` - the SEPA mandate is expired;
+  - `PaymentMeanState.INACTIVE` - the SEPA mandate is expired and cannot be re-activated;
+  - `PaymentMeanState.DELETING` - the customer manually triggered deleting of the payment mean;
+  - `PaymentMeanState.DELETED` - the payment mean is deleted (soft-delete).
+
+- The payment means `active` Boolean property is now deprecated.
+  Use the `state` property instead to check if the payment means are active.
 
 ### Bug fixes
 
