@@ -2,7 +2,7 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.14.
+This is the WhitelabelPay SDK version 1.1.15.
 This release introduces a new SDK state value and a new way to relay the payment means state changes.
 
 ### What's new
