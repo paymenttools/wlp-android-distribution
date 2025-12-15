@@ -2,35 +2,8 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.1.15.
-This release introduces a new SDK state value and a new way to relay the payment means state changes.
-
-### What's new
-
-- The SDK now has a new state value: `State.ACTIVATING`.
-  This state is set when the device is enrolled, but the SEPA mandate is process of activating.
-  Even though the SDK will provide a payment token, it is not possible to make payments
-  with it.
-  We recommend blurring the payment token in the UI and displaying a message to the customer
-  informing them that the payment means is not yet active.
-  The SDK will automatically transition to `State.ACTIVE` when the mandate activation process is completed.
-
-- The payment means introduce a new property: `val state: PaymentMeanState`.
-  This property can have the following values:
-  - `PaymentMeanState.CREATED` - the default value, meaning the payment means are only created;
-  - `PaymentMeanState.ACTIVATING` - the SEPA mandate is in the process of being activated;
-  - `PaymentMeanState.ACTIVE` - the payment mean is active and can be used for payments;
-  - `PaymentMeanState.EXPIRED` - the SEPA mandate is expired;
-  - `PaymentMeanState.INACTIVE` - the SEPA mandate is expired and cannot be re-activated;
-  - `PaymentMeanState.DELETING` - the customer manually triggered deleting of the payment mean;
-  - `PaymentMeanState.DELETED` - the payment mean is deleted (soft-delete).
-
-- The payment means `active` Boolean property is now deprecated.
-  Use the `state` property instead to check if the payment means are active.
-
-### Bug fixes
-
-- The SDK now correctly exposes `WhitelabelPayError` subclasses.
+This is the WhitelabelPay SDK version 1.2.0.
+This release introduces a new way to enroll users into WLP: Online Onboarding.
 
 ## SDK Installation
 
@@ -186,7 +159,27 @@ or observe the state changes by observing the `state` StateFlow property:
     }
 ```
 
-### 4. Tokens
+### 4. Online Onboarding
+
+The Online Onboarding flow consists of the following steps:
+
+1. Trigger the Online Onboarding flow initiation  by calling the `startOnlineOnboarding()` function.
+   It will register the intent of onboarding with our backend and will prepare everything internally
+   to handle the online onboarding.
+2. Provide the user info details via the `requestOnlineOnboardingURL` function and obtain the
+   redirect URL to our 3rd party provider for importing the user bank account.
+3. Open the provided URL in a web view and listen for the success, failure or abort redirects.
+4. When either the success or failure redirect is triggered, make sure to call the
+   `fetchOnlineOnboardingDetails` function, that will return a flow of `OnboardingFlowDetails`.
+   Collect the flow value, monitor the value and retrieve the onboarding status and selected bank
+   account details or the error in case of verification failures.
+5. Using the bank account details received in the previous step, create the
+   Sepa Mandate Confirmation UI, which will require the user consent.
+   When the user taps the user consent button, make sure to call the `submitSepaMandateConsent`
+   function, this will finish the onboarding process and if successful it will switch the SDK into
+   an active state.
+
+### 5. Tokens
 
 #### Enrolment token
 
@@ -276,7 +269,7 @@ The SDK offers a StateFlow property to observe the token changes:
     }
 ```
 
-### 5. Data synchronization
+### 6. Data synchronization
 
 The SDK offers a function to synchronize all SDK data available on the device (sdk state and card data):
 
@@ -303,7 +296,7 @@ a new token through the `token` StateFlow property:
     }
 ```
 
-### 6. Monitoring SDK state and token changes
+### 7. Monitoring SDK state and token changes
 
 The SDK offers two functions to start and stop monitoring the SDK state and token changes.
 
@@ -336,7 +329,7 @@ fun startObservingChanges() {
             }
 
             if (error is WhitelabelPayError.InvalidEnrolmentInstance) {
-              // todo: Inform the user the SDK instance is invalid and needs to be re-enrolled
+                // todo: Inform the user the SDK instance is invalid and needs to be re-enrolled
             }
         }
     )
@@ -366,7 +359,7 @@ override fun onCleared() {
 }
 ```
 
-### 7. Registered cards operations (payment means)
+### 8. Registered cards operations (payment means)
 
 The SDK offers the functionality to retrieve and manage the already registered cards,
 called **payment means** within WhitelabelPay.
@@ -426,7 +419,7 @@ called **payment means** within WhitelabelPay.
     }
 ```
 
-### 8. Sign Off
+### 9. Sign Off
 
 The *signOff* functionality purges ***ALL*** SDK data from the device, as well as deactivates all
 payment means on the backend and changes the mandate status.
@@ -440,7 +433,7 @@ The state of the SDK is set to ONBOARDING.
     }
 ```
 
-### 9. Reset
+### 10. Reset
 
 The *reset* functionality purges ***ALL*** SDK data from the device, resets the SDK state to INACTIVE.
 
@@ -450,7 +443,7 @@ The *reset* functionality purges ***ALL*** SDK data from the device, resets the 
     }
 ```
 
-### 10. Logging
+### 11. Logging
 
 The SDK offers the functionality to log the main actions that are performed by the SDK.
 The SDK has remote logging, enabled by default, and also local logging to logcat and log file.
@@ -485,7 +478,7 @@ private fun exportLogFileToDownloads(): File? {
 }
 ```
 
-### 11. Passing push notifications to WhitelabelPay SDK
+### 12. Passing push notifications to WhitelabelPay SDK
 
 The WhitelabelPay SDK offers the functionality to handle push notifications and to react to four
 different events:
@@ -495,12 +488,12 @@ different events:
 - payment failed.
 
 The reaction to these events would be a sync action.
-In all cases, except for **enrolment failed**, 
+In all cases, except for **enrolment failed**,
 a new payment token will be generated and emitted to the observers of the `token` StateFlow property.
 Also in the case of **enrolment successful**, the SDK state will be set to `ACTIVE`.
 
 The SDK offers the `handleNotification` function to handle the push notifications.
-It accepts a string parameter that represents the type of the notification. 
+It accepts a string parameter that represents the type of the notification.
 The notification type should be retrieved from the push notification payload:
 
 ```kotlin
@@ -512,7 +505,7 @@ The notification type should be retrieved from the push notification payload:
      }
 ```
 
-### 12. Exclude WhitelabelPay data from automatic backup
+### 13. Exclude WhitelabelPay data from automatic backup
 
 If the Application using WhitelabelPay has automatic backup enabled, make sure the data
 generated by the SDK is not persisted in the end-user's Google account.
@@ -532,7 +525,7 @@ specifying an XML resource that excludes the shared preferences file.
 <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/full_backup_exclude">
-    <!-- ... -->
+  <!-- ... -->
 </application>
 ```
 
@@ -545,7 +538,7 @@ the shared preferences file shouldn't be backed up. Here is an example of such a
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
+  <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
 </full-backup-content>
 ```
 
