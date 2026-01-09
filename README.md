@@ -4,8 +4,11 @@
 
 This is the WhitelabelPay SDK version 1.2.1.
 
-This release adds several minor improvements to Online Onboarding flow. It also improves error
-handling capabilities by adding a new error type: `WhitelabelPayError.InvalidUserInfoField`.
+This release adds several improvements to Online Onboarding flow:
+- Improves the security of communication between SDK and WhitelabelPay services;
+- Improves error handling capabilities by adding two new error types:
+   - `WhitelabelPayError.MissingOnboardingId`
+   - `WhitelabelPayError.InvalidUserInfoField`
 
 ## SDK Installation
 
