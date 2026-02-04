@@ -2,13 +2,12 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.1.
+This is the WhitelabelPay SDK version 1.2.2.
 
-This release adds several improvements to Online Onboarding flow:
-- Improves the security of communication between SDK and WhitelabelPay services;
-- Improves error handling capabilities by adding two new error types:
-   - `WhitelabelPayError.MissingOnboardingId`
-   - `WhitelabelPayError.InvalidUserInfoField`
+This release adds several improvements to the Whitelabel Pay SDK:
+- Fixed an issue with missing proguard rules;
+- Improvements for Online Onboarding Flow:
+   - added possibility to retrieve digital SEPA Mandate text from `OnboardingFlowDetails.mandateInfo`.
 
 ## SDK Installation
 
