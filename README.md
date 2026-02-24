@@ -2,12 +2,19 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.2.
+This is the WhitelabelPay SDK version 1.2.3.
 
-This release adds several improvements to the Whitelabel Pay SDK:
-- Fixed an issue with missing proguard rules;
-- Improvements for Online Onboarding Flow:
-   - added possibility to retrieve digital SEPA Mandate text from `OnboardingFlowDetails.mandateInfo`.
+This release adds several changes and improvements to the Whitelabel Pay SDK:
+- Moved the SDK `State` class from enum to sealed class;
+- Added a new state for the SDK: `OnlineOnboarding`;
+- Added the next step param to OnlineOnboarding state, describing the next step in the flow;
+- Moved all user information in `requestOnlineOnboardingURL` function to a data class structure: `OnboardingUserInfo`;
+- Added the possibility to get the bank verification URL without providing the user information;
+- Added the possibility to manually cancel the Online Onboarding flow;
+- Added the possibility to fetch the current Online Onboarding details;
+- Added the `WhitelabelPayError.ExpiredOnlineOnboardingWindow` to denote the Online Onboarding Flow expiration;
+- Improved logging for Online Onboarding flow;
+- Improved error handling;
 
 ## SDK Installation
 
@@ -126,7 +133,7 @@ There are several key points in creating the configuration object to consider:
 - `TENANT_ID` tenant identifier provided by Payment Tools. Should be set to `rew`.
 - `REFERENCE_ID` **Unique** notification identifier for the device.
 - `shouldLog` is a boolean value that enables or disables logging.
-  The logs are printed in the logcat with the tag `WLP-SDK`.
+  When `true` the logs are printed in the logcat with the tag `WLP-SDK`.
   The logs are also recorded in a file that can be exported using the `exportLogs` function.
 
 ### 2. SubjectId
@@ -156,8 +163,15 @@ or observe the state changes by observing the `state` StateFlow property:
 ```kotlin
     sdk.state.collect { state ->
     when (state) {
-        State.INACTIVE -> {}
-        State.ONBOARDING -> {}
+        State.Inactive -> {}
+        State.Onboarding -> {}
+        State.OnlineOnboarding -> { 
+            when(it.nextStep) {
+               OnlineOnboardingSteps.CollectUserInfo -> {}
+               OnlineOnboardingSteps.ImportBankAccount -> {}
+               OnlineOnboardingSteps.ConfirmSepaMandate -> {}
+            }
+        }
         State.ACTIVE -> {}
     }
 }
@@ -182,7 +196,11 @@ The Online Onboarding flow consists of the following steps:
 2. Provide the user info details via the `requestOnlineOnboardingURL` function and obtain the
    redirect URL to our 3rd party provider for importing the user bank account.
    The provided user information is validated and, in case of validation failure, a
-   `WnitelabelPayError.InvalidUserInfoField` error containing the field type, is thrown.
+   `WnitelabelPayError.InvalidUserInfoField` error containing the field type, is thrown. The SDK
+   now supports resuming the Online Onboarding Flow within a 7 days window, if the flow was not
+   previously canceled by the user. Thus, the `requestOnlineOnboardingURL` function now doesn't
+   require the user information only if the information was provided previously.
+   Otherwise, the function will throw an `WhitelabelPayError.OnlineOnboardingError`.
 
    Along with the user info, this function also requires string representations 3 URIs:
    - Success redirect
@@ -197,12 +215,15 @@ The Online Onboarding flow consists of the following steps:
    - Path: Custom, defined by the integrator (e.g., `success`, `failure`, `aborted`)
 
    Example of valid URIs:
+
     ```kotlin
-   const val WLP_SUCCESS_REDIRECT = "wlp://success"
-   const val WLP_FAILURE_REDIRECT = "wlp://failure"
-   const val WLP_ABORT_REDIRECT = "wlp://aborted"
-   ```
+    const val WLP_SUCCESS_REDIRECT = "wlp://success"
+    const val WLP_FAILURE_REDIRECT = "wlp://failure"
+    const val WLP_ABORT_REDIRECT = "wlp://aborted"
+    ```
+
 3. Open the provided URL in a web view and listen for the success, failure and abort redirects.
+
     ```kotlin
     AndroidView(
         modifier = Modifier.fillMaxSize(),
@@ -244,8 +265,7 @@ The Online Onboarding flow consists of the following steps:
 4. When either redirect is triggered, make sure to call the `fetchOnlineOnboardingDetails` function,
    that will return a flow of `OnboardingFlowDetails`.
    Collect the flow, monitor the value and retrieve the onboarding status and selected bank account
-   details or the error in case of
-   verification failures.
+   details with the SEPA Mandate text or the error in case of verification failures.
     ```kotlin
     viewModelScope.launch {
         wlpRepository.fetchOnlineOnboardingDetails().collectLatest { result ->
@@ -254,8 +274,9 @@ The Online Onboarding flow consists of the following steps:
                     when (onboardingFlowInfo.status) {
                         OnboardingState.COMPLETED -> {
                             // retrieve and update UI with account holder info:
-                            // iban = onboardingFlowInfo.iban,
-                            // accountHolder = onboardingFlowInfo.accountHolder
+                            // iban = onboardingFlowInfo.account?.iban,
+                            // accountHolder = onboardingFlowInfo.account?.accountHolder,
+                            // mandateText = onboardingFlowInfo.mandateInfo?.mandateText
                         }
                         else -> {
                             // Continue watching, optionally update loading state
@@ -284,12 +305,37 @@ The Online Onboarding flow consists of the following steps:
         }
     }
     ```
-5. Using the bank account details received in the previous step, create the
-   Sepa Mandate Confirmation UI, which will require the user consent.
+5. Using the bank account details and the SEPA Mandate text received in the previous step, from
+   the SDK state or from the `fetchCurrentOnboardingDetails` function, create the Sepa Mandate
+   Confirmation UI, which will require the user consent.
+
    When the user taps the user consent button, make sure to call the `submitSepaMandateConsent`
    function, this will finish the onboarding process and if successful it will switch the SDK into
    an active state.
+
     ```kotlin
+    // obtain data from SDK state
+    if (state is State.OnlineOnboarding && state.nextStep is ConfirmSepaMandate) {
+        val iban = state.nextStep.account.iban
+        val accountHolder = state.nextStep.account.iban
+        val mandateText = state.nextStep.mandate.mandateText
+        val mandateLocale = state.nextStep.mandate.madaleLocale
+    }  
+   
+    // obtain data from  fetchCurrentOnboardingDetails
+    viewModelScope.launch {
+        try {
+            val details = wlpRepository.fetchCurrentOnboardingDetails() 
+            val iban = details.account.iban
+            val accountHolder = details.account.iban
+            val mandateText = details.mandateInfo.mandateText
+            val mandateLocale = details.mandateInfo.madaleLocale
+        } catch (e: Error) {
+            // handle possible errors
+        }
+    }
+
+    // confirm mandate creation   
     viewModelScope.launch {
         try {
             wlpRepository.confirmSepaMandate() 
@@ -298,6 +344,38 @@ The Online Onboarding flow consists of the following steps:
         }
     }
     ```
+
+#### Canceling the Online onboarding flow
+If the user manually cancels the bank account verification process, make sure to call
+the `cancelOnlineOnboarding` function. This will ensure the current onboarding attempt and all
+related data are deleted and the state of the SDK is properly updated.
+
+   ```kotlin
+   try {
+       sdk.cancelOnlineOnboarding()
+   } catch (e: Error) {
+       // handle possible errors
+   }
+   ```
+
+#### Handling the `OnlineOnboarding` SDK state
+The new `OnlineOnboardnig` state now provides a way for implementing developers to know at what
+step to resume the Online Onboarding process. After staring the flow, there are 3 more steps
+before considering the Online Onboarding complete and being able to perform payments:
+
+- `CollectUserInfo` - the user needs to provide the personal information and obtain the URL to the
+  3rd party bank account verification provider (more details at 2nd step);
+- `ImportBankAccount` - the user needs to go through the bank account verification flow
+  and as a result import the bank account details and SEPA mandate text (more details at steps 3 and 4);
+- `ConfirmSepaMandate` - the user needs to confirm the digital SEPA mandate creation.
+
+#### Online Onboarding expiration
+The Online Onboarding flow now has an expiration window of **7 days** since the moment
+the `startOnlineOnboarding` function was called. If any Online Onboarding operation is triggered
+after the expiration date, the function will throw
+an `WhitelabelPayError.ExpiredOnlineOnboardingWindow` error. Also, the SDK checks for the Online
+Onboarding validity at initialization. When the Online Onboarding reaches its expiration time,
+all the related date is cleared.
 
 ### 5. Tokens
 
@@ -308,9 +386,9 @@ system. The sdk provides a function to get the enrolment token:
 
 ```kotlin
 try {
-   val enrolmentToken = sdk.getEnrolmentToken()
+    val enrolmentToken = sdk.getEnrolmentToken()
 } catch (e: WhitelabelPayError.MissingReferenceId) {
-   Timber.e("get onboarding token failed: ", e)
+    Timber.e("get onboarding token failed: ", e)
 }
 ```
 
@@ -335,9 +413,9 @@ The sdk provides a function to get a payment token (if available):
 
 ```kotlin
 try {
-   val paymentToken = sdk.getPaymentToken()
+    val paymentToken = sdk.getPaymentToken()
 } catch (e: Exception) {
-   Timber.e("get payment token failed: ", e)
+    Timber.e("get payment token failed: ", e)
 }
 ```
 
@@ -374,17 +452,17 @@ The SDK offers a StateFlow property to observe the token changes:
 
 ```kotlin
 sdk.token.collect { token ->
-   when (token) {
-      is Token.EnrolmentToken -> {
-         // handle enrolment token
-      }
-      is Token.PaymentToken -> {
-         // handle payment token
-      }
-      is Token.Empty -> {
-         //handle default value
-      }
-   }
+    when (token) {
+        is Token.EnrolmentToken -> {
+            // handle enrolment token
+        }
+        is Token.PaymentToken -> {
+            // handle payment token
+        }
+        is Token.Empty -> {
+            //handle default value
+        }
+    }
 }
 ```
 
@@ -394,11 +472,11 @@ The SDK offers a function to synchronize all SDK data available on the device (s
 
 ```kotlin
 viewModelScope.launch {
-   try {
-      val state = sdk.sync()
-   } catch (e: Exception) {
-      Timber.e("sync failed: ", e)
-   }
+    try {
+        val state = sdk.sync()
+    } catch (e: Exception) {
+        Timber.e("sync failed: ", e)
+    }
 }
 ```
 
@@ -407,11 +485,11 @@ a new token through the `token` StateFlow property:
 
 ```kotlin
 viewModelScope.launch {
-   try {
-      val state = sdk.sync(updateToken = true)
-   } catch (e: Exception) {
-      Timber.e("sync failed: ", e)
-   }
+    try {
+        val state = sdk.sync(updateToken = true)
+    } catch (e: Exception) {
+        Timber.e("sync failed: ", e)
+    }
 }
 ```
 
@@ -431,27 +509,27 @@ An implementation example would look like this:
 
 ```kotlin
 fun startObservingChanges() {
-   sdk.startMonitoringUpdates(
-      onError = { error: WhitelabelPayError ->
-         // handle error in your UI
-         setErrorMessage(error.message())
+    sdk.startMonitoringUpdates(
+        onError = { error: WhitelabelPayError ->
+            // handle error in your UI
+            setErrorMessage(error.message())
 
-         // delete the previous token from the UI
-         if (error is WhitelabelPayError.TokenSignatureFailure ||
-            error is WhitelabelPayError.GetPaymentMeansError ||
-            error is WhitelabelPayError.GetPaymentTokenError ||
-            error is WhitelabelPayError.NetworkConnectivityFail ||
-            error is WhitelabelPayError.RequestDataSignatureFailure
-         ) {
-            setToken(null)
-            updateCodeImage(null)
-         }
+            // delete the previous token from the UI
+            if (error is WhitelabelPayError.TokenSignatureFailure ||
+                error is WhitelabelPayError.GetPaymentMeansError ||
+                error is WhitelabelPayError.GetPaymentTokenError ||
+                error is WhitelabelPayError.NetworkConnectivityFail ||
+                error is WhitelabelPayError.RequestDataSignatureFailure 
+            ) {
+                setToken(null)
+                updateCodeImage(null)
+            }
 
-         if (error is WhitelabelPayError.InvalidEnrolmentInstance) {
-            // todo: Inform the user the SDK instance is invalid and needs to be re-enrolled
-         }
-      }
-   )
+            if (error is WhitelabelPayError.InvalidEnrolmentInstance) {
+                // todo: Inform the user the SDK instance is invalid and needs to be re-enrolled
+            }
+        }
+    )
 }
 ```
 
@@ -465,7 +543,7 @@ An implementation example would look like this:
 
 ```kotlin
 fun stopObservingChanges() {
-   sdk.stopMonitoringUpdates()
+    sdk.stopMonitoringUpdates()
 }
 ```
 
@@ -473,8 +551,8 @@ or in a viewmodel:
 
 ```kotlin
 override fun onCleared() {
-   super.onCleared()
-   stopObservingChanges()
+    super.onCleared()
+    stopObservingChanges()
 }
 ```
 
@@ -487,9 +565,9 @@ called **payment means** within WhitelabelPay.
 
 ```kotlin
 try {
-   val paymentMeansList = sdk.getPaymentMeansList()
+    val paymentMeansList = sdk.getPaymentMeansList()
 } catch (e: Exception) {
-   Timber.e("get payment means list failed: ", e)
+    Timber.e("get payment means list failed: ", e)
 }
 ```
 
@@ -497,14 +575,14 @@ try {
 
 ```kotlin
 viewModelScope.launch {
-   try {
-      sdk.deactivatePaymentMeans(
-         paymentMeanId = paymentMean.Id,
-         onDeactivationSuccess = { }
-      )
-   } catch (e: Exception) {
-      Timber.e("deactivation of payment mean failed: ", e)
-   }
+    try {
+        sdk.deactivatePaymentMeans(
+            paymentMeanId = paymentMean.Id,
+            onDeactivationSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("deactivation of payment mean failed: ", e)
+    }
 }
 ```
 
@@ -512,14 +590,14 @@ viewModelScope.launch {
 
 ```kotlin
 viewModelScope.launch {
-   try {
-      sdk.reactivatePaymentMean(
-         paymentMeanId = paymentMean.Id,
-         onReactivationSuccess = { }
-      )
-   } catch (e: Exception) {
-      Timber.e("reactivation of payment mean failed: ", e)
-   }
+    try {
+        sdk.reactivatePaymentMean(
+            paymentMeanId = paymentMean.Id,
+            onReactivationSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("reactivation of payment mean failed: ", e)
+    }
 }
 ```
 
@@ -527,14 +605,14 @@ viewModelScope.launch {
 
 ```kotlin
 viewModelScope.launch {
-   try {
-      sdk.deletePaymentMean(
-         paymentMeanId = paymentMean.Id,
-         onDeletionSuccess = { }
-      )
-   } catch (e: Exception) {
-      Timber.e("deleting payment mean failed: ", e)
-   }
+    try {
+        sdk.deletePaymentMean(
+            paymentMeanId = paymentMean.Id,
+            onDeletionSuccess = { }
+        )
+    } catch (e: Exception) {
+        Timber.e("deleting payment mean failed: ", e)
+    }
 }
 ```
 
@@ -546,9 +624,9 @@ The state of the SDK is set to ONBOARDING.
 
 ```kotlin
 viewModelScope.launch {
-   sdk.signOff(
-      onSignOffSuccess = { }
-   )
+    sdk.signOff(
+        onSignOffSuccess = { }
+    )
 }
 ```
 
@@ -558,8 +636,8 @@ The *reset* functionality purges ***ALL*** SDK data from the device, resets the 
 
 ```kotlin
     viewModelScope.launch {
-   wlpSdk.reset()
-}
+        wlpSdk.reset()
+    }
 ```
 
 ### 11. Logging
@@ -579,21 +657,21 @@ Here is an example of how to export the logs to the external Downloads directory
  * Returns the copied file or null if anything fails.
  */
 private fun exportLogFileToDownloads(): File? {
-   val logFile = sdk.exportLogs()
-   if (logFile == null || !logFile.exists()) return null
+    val logFile = sdk.exportLogs()
+    if (logFile == null || !logFile.exists()) return null
 
-   val downloadsDir =
-      Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-   if (!downloadsDir.exists()) downloadsDir.mkdirs()
+    val downloadsDir =
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    if (!downloadsDir.exists()) downloadsDir.mkdirs()
 
-   val exportedFile = File(downloadsDir, "wlp_sdk_logs_${LocalDate.now()}.txt")
-   return try {
-      logFile.copyTo(exportedFile, overwrite = true)
-      exportedFile
-   } catch (e: IOException) {
-      Timber.tag("SettingsViewModel").e(e, "Failed to export logs")
-      null
-   }
+    val exportedFile = File(downloadsDir, "wlp_sdk_logs_${LocalDate.now()}.txt")
+    return try {
+        logFile.copyTo(exportedFile, overwrite = true)
+        exportedFile
+    } catch (e: IOException) {
+        Timber.tag("SettingsViewModel").e(e, "Failed to export logs")
+        null
+    }
 }
 ```
 
@@ -618,9 +696,9 @@ The notification type should be retrieved from the push notification payload:
 ```kotlin
 val eventType = message.data["type"]
 try {
-   sdk.handleNotification(eventType = eventType)
+    sdk.handleNotification(eventType = eventType)
 } catch (e: WhitelabelPayError.WrongNotificationType) {
-   Timber.e(e)
+    Timber.e(e)
 }
 ```
 
@@ -642,9 +720,9 @@ specifying an XML resource that excludes the shared preferences file.
 
 ```xml
 <application
-        android:allowBackup="true"
-        android:fullBackupContent="@xml/full_backup_exclude">
-   <!-- ... -->
+    android:allowBackup="true"
+    android:fullBackupContent="@xml/full_backup_exclude">
+    <!-- ... -->
 </application>
 ```
 
@@ -657,7 +735,7 @@ the shared preferences file shouldn't be backed up. Here is an example of such a
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-   <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
+    <exclude domain="sharedpref" path="wlp-sdk-prefs-bundle-id.xml"/>
 </full-backup-content>
 ```
 
