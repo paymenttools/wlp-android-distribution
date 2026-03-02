@@ -2,19 +2,10 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.3.
+This is the WhitelabelPay SDK version 1.2.21.
 
-This release adds several changes and improvements to the Whitelabel Pay SDK:
-- Moved the SDK `State` class from enum to sealed class;
-- Added a new state for the SDK: `OnlineOnboarding`;
-- Added the next step param to OnlineOnboarding state, describing the next step in the flow;
-- Moved all user information in `requestOnlineOnboardingURL` function to a data class structure: `OnboardingUserInfo`;
-- Added the possibility to get the bank verification URL without providing the user information;
-- Added the possibility to manually cancel the Online Onboarding flow;
-- Added the possibility to fetch the current Online Onboarding details;
-- Added the `WhitelabelPayError.ExpiredOnlineOnboardingWindow` to denote the Online Onboarding Flow expiration;
-- Improved logging for Online Onboarding flow;
-- Improved error handling;
+This release patches WhitelabelPay SDK version 1.2.2. It fixes the issue where reading the payment means without 
+the `state` field would cause a deserialization error and a crash.
 
 ## SDK Installation
 
