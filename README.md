@@ -2,10 +2,9 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.21.
+This is the WhitelabelPay SDK version 1.2.31.
 
-This release patches WhitelabelPay SDK version 1.2.2. It fixes the issue where reading the payment means without 
-the `state` field would cause a deserialization error and a crash.
+This release addresses minor under-the-hood adjustments for Online Onboarding flow.
 
 ## SDK Installation
 
