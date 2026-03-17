@@ -2,9 +2,13 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.31.
+This is the WhitelabelPay SDK version 1.2.4.
 
-This release addresses minor under-the-hood adjustments for Online Onboarding flow.
+This release focuses on improvements and security of the Online Onboarding Flow in the Whitelabel Pay SDK;
+- Added the `WhitelabelPayError.AccountActivationRestricted` error to indicate that the imported IBAN is not allowed to be used;
+- Adjusted messages for other Online Onboarding Flow related errors;
+- Fixed a bug where the SDK State was not updating properly during the Online Onboarding Flow;
+- Improved SDK ↔ BE communication security.
 
 ## SDK Installation
 
