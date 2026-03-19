@@ -36,7 +36,7 @@ collaborators:
 #  - username: adobresol
 #    permission: admin
 
-    # Reve devs
+    # Rewe devs
   - username: lehmansnDev
     permission: pull
   - username: superus8r
@@ -70,4 +70,18 @@ collaborators:
   - username: rd-inci-cagirici
     permission: pull
   - username: LadyLazorcorn
+    permission: pull
+  - username: rd-andre-wollenweber
+    permission: pull
+  - username: RBork
+    permission: pull
+  - username: rd-jonah-sieg
+    permission: pull
+  - username: rd-david-wahlandt
+    permission: pull
+  - username: thomaslange
+    permission: pull
+  - username: UemitGuel
+    permission: pull
+  - username: rd-marc-gidaszewski
     permission: pull
