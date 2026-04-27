@@ -2,9 +2,12 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.5.
+This is the WhitelabelPay SDK version 1.2.6.
 
-This release fixes a bug when the `Inactive` SDK State was not calculated correctly.
+This release focuses on migrating away from the deprecated `Encrypted SharedPreferences` API.
+- The SDK now uses the `SharedPreferences` API with a custom encryption mechanism for storing the SDK data securely on the device.
+- The migration is done in a way that doesn't require users to re-enroll if they are already enrolled with a previous version of the SDK. The migration process is triggered at the initialization of the SDK.
+- Fixed a bug where submitting the user information to request the bank verification URL in the Online Onboarding flow, would result in a 401 response code from the server.
 
 ## SDK Installation
 
