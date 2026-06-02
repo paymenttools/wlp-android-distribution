@@ -55,6 +55,8 @@ collaborators:
     permission: pull
   - username: dbaelz
     permission: pull
+  - username: ositoBonito
+    permission: pull
   - username: rd-stefan-jager
     permission: pull
   - username: lukaszkalnik
