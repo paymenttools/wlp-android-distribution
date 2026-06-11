@@ -2,12 +2,14 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.6.
+This is the WhitelabelPay SDK version 1.2.7.
 
-This release focuses on migrating away from the deprecated `Encrypted SharedPreferences` API.
-- The SDK now uses the `SharedPreferences` API with a custom encryption mechanism for storing the SDK data securely on the device.
-- The migration is done in a way that doesn't require users to re-enroll if they are already enrolled with a previous version of the SDK. The migration process is triggered at the initialization of the SDK.
-- Fixed a bug where submitting the user information to request the bank verification URL in the Online Onboarding flow, would result in a 401 response code from the server.
+This release improves on the Online Onboarding Flow based on feedback from Friends&Family testing phase.
+
+- The SDK now exposes `didExpireOnlineOnboardingSession`: a StateFlow variable that provides a flag telling whether the online onboarding session is expired;
+- Improvements were added to the online onboarding flow polling process: the SDK now stops the polling while the application is in the background and resumes it when the application is back in the foreground;
+- The `state` StateFlow variable now initializes with the computed state instead of using a default value (Inactive);
+- Small improvements and bugfixes were also added.
 
 ## SDK Installation
 
