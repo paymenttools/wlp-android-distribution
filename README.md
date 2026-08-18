@@ -2,13 +2,15 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.7.
+This is the WhitelabelPay SDK version 1.2.8.
 
-This release improves on the Online Onboarding Flow based on feedback from Friends&Family testing phase.
+This release expands Online Onboarding Flow error handling.
 
-- The SDK now exposes `didExpireOnlineOnboardingSession`: a StateFlow variable that provides a flag telling whether the online onboarding session is expired;
-- Improvements were added to the online onboarding flow polling process: the SDK now stops the polling while the application is in the background and resumes it when the application is back in the foreground;
-- The `state` StateFlow variable now initializes with the computed state instead of using a default value (Inactive);
+- **!!!Breaking change!!!** `WhitelabelPayError.InvalidUserInfoField` was removed in favor of `WhitelabelPayError.InvalidUserData`.
+- Added `WhitelabelPayError.AccountNameMismatch` to indicate that the imported account holder's name doesn't match the user's provided name;
+- Fixed `startOnlineOnboarding()` re-triggering device onboarding when a valid onboarding session was already in progress, which could overwrite the stored session and cause the backend to reject subsequent requests;
+- Improved error parsing and messages for other Online Onboarding Flow errors (invalid timestamp, webform not found, validation errors);
+- Fixed an issue when sending internal telemetry data was causing ANR reports;
 - Small improvements and bugfixes were also added.
 
 ## SDK Installation
