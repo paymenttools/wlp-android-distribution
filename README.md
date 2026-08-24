@@ -2,7 +2,7 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.8.
+This is the WhitelabelPay SDK version 1.2.9.
 
 This release expands Online Onboarding Flow error handling.
 
@@ -11,6 +11,7 @@ This release expands Online Onboarding Flow error handling.
 - Fixed `startOnlineOnboarding()` re-triggering device onboarding when a valid onboarding session was already in progress, which could overwrite the stored session and cause the backend to reject subsequent requests;
 - Improved error parsing and messages for other Online Onboarding Flow errors (invalid timestamp, webform not found, validation errors);
 - Fixed an issue when sending internal telemetry data was causing ANR reports;
+- Fixed an issue where an inconsistent Android Keystore state would trigger generation of new key material, thus orphaning existing active instance;
 - Small improvements and bugfixes were also added.
 
 ## SDK Installation
