@@ -2,16 +2,13 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.9.
+This is the WhitelabelPay SDK version 1.2.10.
 
-This release expands Online Onboarding Flow error handling.
+This release improves reliability of secure storage access and SDK initialization.
 
-- **!!!Breaking change!!!** `WhitelabelPayError.InvalidUserInfoField` was removed in favor of `WhitelabelPayError.InvalidUserData`.
-- Added `WhitelabelPayError.AccountNameMismatch` to indicate that the imported account holder's name doesn't match the user's provided name;
-- Fixed `startOnlineOnboarding()` re-triggering device onboarding when a valid onboarding session was already in progress, which could overwrite the stored session and cause the backend to reject subsequent requests;
-- Improved error parsing and messages for other Online Onboarding Flow errors (invalid timestamp, webform not found, validation errors);
-- Fixed an issue when sending internal telemetry data was causing ANR reports;
-- Fixed an issue where an inconsistent Android Keystore state would trigger generation of new key material, thus orphaning existing active instance;
+- Fixed an issue where a single failed Android Keystore read could end the retry sequence early, causing the storage key to be reported as unavailable;
+- Fixed a rare `NullPointerException` during SDK initialization;
+- Small improvements to internal diagnostics;
 - Small improvements and bugfixes were also added.
 
 ## SDK Installation
