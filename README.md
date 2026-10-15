@@ -2,13 +2,16 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.10.
+This is the WhitelabelPay SDK version 1.2.12.
 
-This release improves reliability of secure storage access and SDK initialization.
+This release makes user info sync more reliable and hardens the SDK against crashes in logging and device checks.
 
-- Fixed an issue where a single failed Android Keystore read could end the retry sequence early, causing the storage key to be reported as unavailable;
-- Fixed a rare `NullPointerException` during SDK initialization;
-- Small improvements to internal diagnostics;
+- `setUserInfo` can now be called on every app start, including for users who enrolled earlier (e.g. via the in-store flow). The info is stored
+  and uploaded on the next `sync` once the device is enrolled and online, and only when it or the active payment mean has changed;
+- A failed user info upload no longer fails the `sync` that triggered it. The info stays stored and is retried on the next sync;
+- Fixed duplicate user info uploads when `setUserInfo` and `sync` ran at the same time;
+- Fixed canceled requests being logged as unexpected errors when payment means are refreshed;
+- Logging and telemetry failures can no longer crash the host app;
 - Small improvements and bugfixes were also added.
 
 ## SDK Installation
