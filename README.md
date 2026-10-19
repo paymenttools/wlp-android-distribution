@@ -2,16 +2,11 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.12.
+This is the WhitelabelPay SDK version 1.2.123.
 
-This release makes user info sync more reliable and hardens the SDK against crashes in logging and device checks.
+This release improves the reliability of SDK telemetry. There are no API changes and no action is required.
 
-- `setUserInfo` can now be called on every app start, including for users who enrolled earlier (e.g. via the in-store flow). The info is stored
-  and uploaded on the next `sync` once the device is enrolled and online, and only when it or the active payment mean has changed;
-- A failed user info upload no longer fails the `sync` that triggered it. The info stays stored and is retried on the next sync;
-- Fixed duplicate user info uploads when `setUserInfo` and `sync` ran at the same time;
-- Fixed canceled requests being logged as unexpected errors when payment means are refreshed;
-- Logging and telemetry failures can no longer crash the host app;
+- Improved events and log tracing;
 - Small improvements and bugfixes were also added.
 
 ## SDK Installation
