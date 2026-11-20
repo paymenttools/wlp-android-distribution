@@ -2,17 +2,9 @@
 
 ## What's new
 
-This is the WhitelabelPay SDK version 1.2.14.
+This is the WhitelabelPay SDK version 1.2.15.
 
-This release unifies the customer id naming and improves `setUserInfo`. Old names are deprecated, not removed, so existing code keeps compiling. The next release will remove all deprecations.
-
-- `customerId` is now the only name for the customer's id. It is set by the app, and the same value must be passed when requesting an online onboarding URL and to `setUserInfo`. It must be 1 to 50 characters long (the online onboarding limit was 36);
-- Deprecated `OnboardingUserInfo.userId`, `setUserInfo(reweId = ...)` and `FieldType.USER_ID`. Use `customerId` and `FieldType.CUSTOMER_ID` instead. The SDK still reports `USER_ID` for an invalid customer id, so handle both for now;
-- `setUserInfo` now validates its input and rejects invalid info with `FailureToUpdateUserInfo`. Info that cannot be sent yet is stored and sent on a later `sync()`;
-- Enhanced security for the in-store onboarding and payment means management flows;
-- Small improvements and bugfixes were also added.
-
-Migration: replace `copy(userId = ...)` on `OnboardingUserInfo` with `copy(customerId = ...)`. If you call `setUserInfo(reweId = ...)` by name, add `import com.paymenttools.paymenttoolssdk.setUserInfo`. Positional calls are unaffected.
+This release focuses on small improvements of the internal telemetry and logging. No breaking changes were introduced.
 
 ## SDK Installation
 
